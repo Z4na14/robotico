@@ -3,9 +3,17 @@
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include "i2clib.h"
+#include "iot_servo.h"
 
-#define sleep(x) esp_cpu_cycle_count_t init_count = esp_cpu_get_cycle_count(); \
-                 while (esp_cpu_get_cycle_count() < init_count + 250000000*x) {}
+#define SERVO_PIN_1 18
+#define SERVO_PIN_2 19
+#define SPEED_MODE LEDC_LOW_SPEED_MODE
+
+void sleep_prog(int x)
+{
+    esp_cpu_cycle_count_t init_count = esp_cpu_get_cycle_count();
+    while (esp_cpu_get_cycle_count() < init_count + 250000000*x) {}
+}
 
 
 void app_main(void) {
@@ -30,7 +38,7 @@ void app_main(void) {
     LCD_setCursor(6,1);
     LCD_writeStr("d d");
 
-    sleep(2);
+    sleep_prog(2);
 
 
     // Example custom character: A smiley face
@@ -58,5 +66,31 @@ void app_main(void) {
 
     LCD_setCursor(15, 0);
     LCD_writeCustomChar(2);
+
+
+    servo_config_t servo_cfg = {
+        .max_angle = 180,
+        .min_width_us = 500,
+        .max_width_us = 2500,
+        .freq = 50,
+        .timer_number = LEDC_TIMER_0,
+        .channels = {
+            .servo_pin = {
+                SERVO_PIN_1,
+                SERVO_PIN_2,
+
+            },
+            .ch = {
+                LEDC_CHANNEL_0,
+                LEDC_CHANNEL_1,
+
+            },
+        },
+        .channel_number = 2,
+    };
+    iot_servo_init(SPEED_MODE, &servo_cfg);
+
+    iot_servo_write_angle(SPEED_MODE, 0, 90.0f);
+    iot_servo_write_angle(SPEED_MODE, 1, 90.0f);
 
 }
